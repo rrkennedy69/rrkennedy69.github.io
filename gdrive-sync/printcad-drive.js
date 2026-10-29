@@ -83,16 +83,20 @@
     pending: "Changes waiting…", saving: "Saving to Drive…", saved: "Saved to Drive", error: "Drive error", offline: "Offline – will retry"
   };
   function btn(label, fn, cls) { var b = document.createElement("button"); b.type = "button"; b.textContent = label; b.onclick = fn; if (cls) b.className = cls; return b; }
+  var panels = [], lastSt = "signed-out";
   function render(st) {
-    if (!el.w) return;
-    el.w.className = "pcs-w pcd-w pcs-" + st;
-    el.txt.textContent = statusText[st] || st;
+    lastSt = st = st || lastSt;
     var on = S.isSignedIn();
-    el.inB.style.display = on ? "none" : "";
-    el.outB.style.display = el.allB.style.display = el.resB.style.display = on ? "" : "none";
     var startPage = document.body.dataset.printcadView ? document.body.dataset.printcadView === "start" : !document.querySelector("canvas");
-    el.allB.disabled = el.resB.disabled = !app();
-    el.w.dataset.page = startPage ? "start" : "editor";
+    panels = panels.filter(function (P) { return P.corner || document.body.contains(P.w); });
+    panels.forEach(function (P) {
+      P.w.className = (P.corner ? "pcs-w pcd-w pcd-corner pcs-" : "pcd-settings pcs-") + st;
+      if (!P.busy) P.txt.textContent = statusText[st] || st;
+      P.inB.style.display = on ? "none" : "";
+      P.outB.style.display = P.allB.style.display = P.resB.style.display = on ? "" : "none";
+      P.allB.disabled = P.resB.disabled = !app();
+      if (P.corner) P.w.dataset.page = startPage ? "start" : "editor";
+    });
   }
   function dialog(all) {
     var files = all.filter(function (x) { return /\.lyl$/.test(x.name); }), pngs = {};
@@ -130,30 +134,50 @@
     d.appendChild(box); d.onclick = function (e) { if (e.target === d) d.remove(); };
     document.body.appendChild(d);
   }
-  function mount() {
-    if (el.w) return;
-    var w = el.w = document.createElement("div");
+  function makePanel(corner) {
+    var P = { corner: corner }, w = P.w = document.createElement("div");
     w.setAttribute("role", "region"); w.setAttribute("aria-label", "Google Drive backup");
     var dot = document.createElement("span"); dot.className = "pcs-dot";
-    el.txt = document.createElement("span"); el.txt.className = "pcd-txt";
-    el.inB = btn("Sign in with Google", function () { S.signIn().catch(function (e) { console.warn("PrintCAD sign-in:", e); }); }, "pcd-signin");
-    el.allB = btn("Back up all", function () {
-      el.allB.disabled = true;
-      backupAll().then(function (n) { el.txt.textContent = "Backed up " + n + " designs"; }, function (e) { el.txt.textContent = "Backup failed: " + (e && e.message || e); })
-        .finally(function () { el.allB.disabled = false; });
+    P.txt = document.createElement("span"); P.txt.className = "pcd-txt";
+    P.inB = btn("Sign in with Google", function () { S.signIn().catch(function (e) { console.warn("PrintCAD sign-in:", e); }); }, "pcd-signin");
+    P.allB = btn("Back up all", function () {
+      P.allB.disabled = true; P.busy = true;
+      backupAll().then(function (n) { P.txt.textContent = "Backed up " + n + " designs"; }, function (e) { P.txt.textContent = "Backup failed: " + (e && e.message || e); })
+        .finally(function () { P.allB.disabled = false; setTimeout(function () { P.busy = false; }, 4000); });
     }, "pcd-all");
-    el.resB = btn("Drive designs…", function () { S.list().then(function (f) { dialog(f); }, function (e) { el.txt.textContent = "List failed: " + (e && e.message || e); }); }, "pcd-restore");
-    el.outB = btn("Sign out", function () { S.signOut(); }, "pcd-signout");
-    [dot, el.txt, el.inB, el.allB, el.resB, el.outB].forEach(function (n) { w.appendChild(n); });
-    document.body.appendChild(w);
+    P.resB = btn("Drive designs…", function () { S.list().then(function (f) { dialog(f); }, function (e) { P.txt.textContent = "List failed: " + (e && e.message || e); }); }, "pcd-restore");
+    P.outB = btn("Sign out", function () { S.signOut(); }, "pcd-signout");
+    if (!corner) {
+      var h = document.createElement("div"); h.className = "pcd-settings-head";
+      h.innerHTML = "<strong>Google account &amp; Drive backup</strong><span>While signed in, every design is saved to your Google Drive automatically.</span>";
+      w.appendChild(h);
+    }
+    var row = document.createElement("div"); row.className = "pcd-row";
+    [dot, P.txt].forEach(function (n) { row.appendChild(n); }); w.appendChild(row);
+    var bar = document.createElement("div"); bar.className = "pcd-row";
+    [P.inB, P.allB, P.resB, P.outB].forEach(function (n) { bar.appendChild(n); }); w.appendChild(bar);
+    if (!cfg.googleClientId) { P.inB.disabled = true; }
+    panels.push(P); return P;
+  }
+  function mount() {
+    if (panels.some(function (P) { return P.corner; })) return;
+    document.body.appendChild(makePanel(true).w);
     render("signed-out");
+    /* Settings dialog: the app leaves an empty [data-printcad-drive-settings] slot to fill. */
+    function fill() {
+      [].forEach.call(document.querySelectorAll("[data-printcad-drive-settings]"), function (slot) {
+        if (slot.firstChild) return; slot.appendChild(makePanel(false).w); render();
+      });
+    }
+    new MutationObserver(fill).observe(document.body, { childList: true, subtree: true }); fill();
   }
   S.onStatus(function (st) { render(st); });
   window.addEventListener("printcad:app-ready", function () { render(S.isSignedIn() ? "signed-in" : "signed-out"); });
+  window.addEventListener("printcad:view", function () { render(); });
 
   function start() {
     mount();
-    if (!cfg.googleClientId) { el.txt.textContent = "Drive sync not configured"; el.inB.disabled = true; return; }
+    if (!cfg.googleClientId) { statusText["signed-out"] = "Drive sync not configured"; render(); return; }
     S.init({ clientId: cfg.googleClientId, appName: "PrintCAD", debounceMs: 2000 }).catch(function () {});
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();

@@ -18,6 +18,21 @@
 </style>
 </head>
 <body>
+<style>.pc-steps img{display:block;width:100%;max-width:320px;margin:8px 0;border-radius:8px}.pc-steps li{margin:0 0 18px}.pc-easy{background:#eef5ff;border:1px solid #c6dafc;border-radius:10px;padding:10px 14px;margin:12px 0}.pc-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:600px){.pc-two{grid-template-columns:1fr}}</style>
+<h1>Tinkercad to PrintCAD</h1>
+<div class="pc-easy"><b>Easiest way:</b> in Tinkercad click <b>Export</b> &rarr; <b>.STL</b>, then in <a href="/">PrintCAD</a> click <b>Import from Tinkercad</b> and drop the file. Each object comes in as its own piece.
+<img src="img/export-stl.svg" alt="Tinkercad Export, then .STL" style="display:block;max-width:320px;margin-top:8px"></div>
+<h2>Keep colours and holes</h2>
+<ol class="pc-steps">
+<li><b>Save this button as a bookmark</b> (once).
+<p><a class="mark" id="pc-mark" href="#">Export to PrintCAD</a> &nbsp; <button type="button" id="pc-copy">Copy bookmark code</button> <span id="pc-copied"></span></p>
+<div class="pc-two"><div><b>Computer:</b> drag the blue button up to your bookmarks bar. No bar? Press Ctrl+Shift+B (Mac: Cmd+Shift+B).<img src="img/bookmark-desktop.svg" alt="Drag the blue button to the bookmarks bar"></div>
+<div><b>iPad or phone:</b> tap <i>Copy bookmark code</i>. Bookmark any page, then edit that bookmark: paste the code as its address and name it &ldquo;Export to PrintCAD&rdquo;.<img src="img/bookmark-mobile.svg" alt="Paste the code into a bookmark"></div></div></li>
+<li><b>Open your design in Tinkercad</b> and click (or tap) the bookmark. A file downloads.<img src="img/click-bookmark.svg" alt="Click the bookmark while your design is open"></li>
+<li><b>In <a href="/">PrintCAD</a>, click Import from Tinkercad</b> and drop that file. Every shape arrives as its own object, with its colour; holes stay holes.<img src="img/drop-here.svg" alt="Drop the file into PrintCAD"></li>
+</ol>
+<details><summary>More details, other browsers and the licence</summary>
+
 <h1>Tinkercad to PrintCAD</h1>
 <p>Bring your Tinkercad design into PrintCAD so you can keep editing it. PrintCAD opens the same <code>.lyl</code> project files (the format is shared with layerling, so the tool still says “layerling” in places).</p><p style="font-size:12px;color:#666">This is the community “Tinkercad to Layerling importer” (MIT licence, see <a href="LICENSE-tinkercad-importer.txt">LICENSE</a>), hosted here unchanged apart from this page text. It is not made by or affiliated with Autodesk/Tinkercad, and it reads the design you have open in Tinkercad’s editor using undocumented editor internals, so a Tinkercad update can break it.</p>
 <p>Use a computer for these steps. Your original Tinkercad design stays unchanged.</p>
@@ -2162,5 +2177,9 @@ document.getElementById("convert").addEventListener("click", async () => {
     }
   });
 </script>
+</details>
+<script>addEventListener("load",function(){var m=document.getElementById("mark"),c=document.getElementById("pc-mark");function sync(){if(m&&m.href&&m.href.indexOf("javascript:")===0)c.href=m.href;}sync();setTimeout(sync,500);
+c.addEventListener("click",function(e){e.preventDefault();});
+document.getElementById("pc-copy").onclick=function(){sync();var t=c.href;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){document.getElementById("pc-copied").textContent="Copied";},function(){prompt("Copy this code:",t);});};});</script>
 </body>
 </html>
