@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tinkercad to PrintCAD</title>
+<title>Tinkercad to PrintCaddy</title>
 <style>
   body { font: 16px/1.5 system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; color: #1c1c1c; }
   a.mark { display: inline-block; background: #1473e6; color: white; text-decoration: none; padding: 0.5rem 0.9rem; border-radius: 6px; }
@@ -19,22 +19,22 @@
 </head>
 <body>
 <style>.pc-steps img{display:block;width:100%;max-width:320px;margin:8px 0;border-radius:8px}.pc-steps li{margin:0 0 18px}.pc-easy{background:#eef5ff;border:1px solid #c6dafc;border-radius:10px;padding:10px 14px;margin:12px 0}.pc-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:600px){.pc-two{grid-template-columns:1fr}}</style>
-<h1>Tinkercad to PrintCAD</h1>
-<div class="pc-easy"><b>Easiest way:</b> in Tinkercad click <b>Export</b> &rarr; <b>.STL</b>, then in <a href="/">PrintCAD</a> click <b>Import from Tinkercad</b> and drop the file. Each object comes in as its own piece.
+<h1>Tinkercad to PrintCaddy</h1>
+<div class="pc-easy"><b>Easiest way:</b> in Tinkercad click <b>Export</b> &rarr; <b>.STL</b>, then in <a href="/">PrintCaddy</a> click <b>Import from Tinkercad</b> and drop the file. Each object comes in as its own piece.
 <img src="img/export-stl.svg" alt="Tinkercad Export, then .STL" style="display:block;max-width:320px;margin-top:8px"></div>
 <h2>Keep colours and holes</h2>
 <ol class="pc-steps">
 <li><b>Save this button as a bookmark</b> (once).
-<p><a class="mark" id="pc-mark" href="#">Export to PrintCAD</a> &nbsp; <button type="button" id="pc-copy">Copy bookmark code</button> <span id="pc-copied"></span></p>
+<p><a class="mark" id="pc-mark" href="#">Export to PrintCaddy</a> &nbsp; <button type="button" id="pc-copy">Copy bookmark code</button> <span id="pc-copied"></span></p>
 <div class="pc-two"><div><b>Computer:</b> drag the blue button up to your bookmarks bar. No bar? Press Ctrl+Shift+B (Mac: Cmd+Shift+B).<img src="img/bookmark-desktop.svg" alt="Drag the blue button to the bookmarks bar"></div>
-<div><b>iPad or phone:</b> tap <i>Copy bookmark code</i>. Bookmark any page, then edit that bookmark: paste the code as its address and name it &ldquo;Export to PrintCAD&rdquo;.<img src="img/bookmark-mobile.svg" alt="Paste the code into a bookmark"></div></div></li>
+<div><b>iPad or phone:</b> tap <i>Copy bookmark code</i>. Bookmark any page, then edit that bookmark: paste the code as its address and name it &ldquo;Export to PrintCaddy&rdquo;.<img src="img/bookmark-mobile.svg" alt="Paste the code into a bookmark"></div></div></li>
 <li><b>Open your design in Tinkercad</b> and click (or tap) the bookmark. A file downloads.<img src="img/click-bookmark.svg" alt="Click the bookmark while your design is open"></li>
-<li><b>In <a href="/">PrintCAD</a>, click Import from Tinkercad</b> and drop that file. Every shape arrives as its own object, with its colour; holes stay holes.<img src="img/drop-here.svg" alt="Drop the file into PrintCAD"></li>
+<li><b>In <a href="/">PrintCaddy</a>, click Import from Tinkercad</b> and drop that file. Every shape arrives as its own object, with its colour; holes stay holes.<img src="img/drop-here.svg" alt="Drop the file into PrintCaddy"></li>
 </ol>
 <details><summary>More details, other browsers and the licence</summary>
 
-<h1>Tinkercad to PrintCAD</h1>
-<p>Bring your Tinkercad design into PrintCAD so you can keep editing it. PrintCAD opens the same <code>.lyl</code> project files (the format is shared with layerling, so the tool still says “layerling” in places).</p><p style="font-size:12px;color:#666">This is the community “Tinkercad to Layerling importer” (MIT licence, see <a href="LICENSE-tinkercad-importer.txt">LICENSE</a>), hosted here unchanged apart from this page text. It is not made by or affiliated with Autodesk/Tinkercad, and it reads the design you have open in Tinkercad’s editor using undocumented editor internals, so a Tinkercad update can break it.</p>
+<h1>Tinkercad to PrintCaddy</h1>
+<p>Bring your Tinkercad design into PrintCaddy so you can keep editing it. PrintCaddy opens the same <code>.lyl</code> project files (the format is shared with layerling, so the tool still says “layerling” in places).</p><p style="font-size:12px;color:#666">This is the community “Tinkercad to Layerling importer” (MIT licence, see <a href="LICENSE-tinkercad-importer.txt">LICENSE</a>), hosted here unchanged apart from this page text. It is not made by or affiliated with Autodesk/Tinkercad, and it reads the design you have open in Tinkercad’s editor using undocumented editor internals, so a Tinkercad update can break it.</p>
 <p>Use a computer for these steps. Your original Tinkercad design stays unchanged.</p>
 <h2>Set up once</h2>
 <ol>
@@ -62,7 +62,7 @@
   <li><strong>Open your design in Tinkercad.</strong> Click <strong>Edit</strong> if you are looking at its preview page. Wait until you can see the design in the editor.</li>
   <li><strong>Click the saved Export to layerling bookmark.</strong> With nothing selected, the whole design exports immediately. To export specific parts or groups, select them first (Shift-click for multiple selections), then choose <strong>Export whole design</strong> or <strong>Export selected parts</strong>. If Tinkercad reloads the first time, wait for your design to reappear, reselect any parts and click the bookmark again.</li>
   <li><strong>Wait for “Project ready.”</strong> Your browser downloads a file ending in <code>.lyl</code>, usually into your <strong>Downloads</strong> folder. If nothing downloads, click <strong>Download .lyl again</strong> in the small export panel.</li>
-  <li><strong>Open the file in layerling.</strong> On <a href="/">PrintCAD’s start page</a> (or use <strong>Import from Tinkercad</strong> there), click <strong>Open a design or import geometry</strong> and choose the downloaded <code>.lyl</code> file. You can also drag the file into the layerling window.</li>
+  <li><strong>Open the file in layerling.</strong> On <a href="/">PrintCaddy’s start page</a> (or use <strong>Import from Tinkercad</strong> there), click <strong>Open a design or import geometry</strong> and choose the downloaded <code>.lyl</code> file. You can also drag the file into the layerling window.</li>
 </ol>
 <p>For your next design, repeat only the steps under <strong>Export a design</strong>.</p>
 <p>The selection is captured when the bookmark opens. Close and reopen the panel to change it. Selected groups include all their contents and Boolean operands at their original world positions; overlapping selections are exported once. A confirmed empty selection exports the whole design immediately. If selection cannot be read, the panel asks you to choose whole-design export explicitly. Selected-only filenames include <code>- selection</code>. Design-level notes are omitted in selected-only mode because they have no supported part association.</p>

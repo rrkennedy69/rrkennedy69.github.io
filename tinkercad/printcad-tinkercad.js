@@ -1,6 +1,6 @@
-/* "Import from Tinkercad" for PrintCAD. Runs entirely in the browser.
- * - Tinkercad STL / OBJ (+MTL or the OBJ .zip) / SVG / 3MF exports go to PrintCAD's own importer (meshes; SVG becomes an editable sketch body).
- * - A .lyl made by the "Export to PrintCAD" bookmark (community Tinkercad importer, MIT) opens directly:
+/* "Import from Tinkercad" for PrintCaddy. Runs entirely in the browser.
+ * - Tinkercad STL / OBJ (+MTL or the OBJ .zip) / SVG / 3MF exports go to PrintCaddy's own importer (meshes; SVG becomes an editable sketch body).
+ * - A .lyl made by the "Export to PrintCaddy" bookmark (community Tinkercad importer, MIT) opens directly:
  *   keeps groups, hole/solid state, colours, visibility and Boolean operands (each part a mesh).
  * - A JSON capture from that bookmark is converted here with its MIT-licensed converter (browser-convert.js). */
 (function () {
@@ -118,12 +118,12 @@
       '<h3>Import from Tinkercad</h3>' +
       '<div class="pct-easy"><b>Easiest way</b><ol>' +
       '<li>In Tinkercad, click <b>Export</b>, then <b>.STL</b>. A file is saved.' + img("export-stl", "Tinkercad Export button, then .STL") + '</li>' +
-      '<li>Drop that file in the box below (or tap <b>Choose file</b>). Each object comes in as its own piece.' + img("drop-here", "Drop the file into PrintCAD") + '</li>' +
+      '<li>Drop that file in the box below (or tap <b>Choose file</b>). Each object comes in as its own piece.' + img("drop-here", "Drop the file into PrintCaddy") + '</li>' +
       '</ol></div>' +
       '<div class="pct-drop" tabindex="0">Drop Tinkercad files here<br><button type="button" class="pct-pick">Choose file…</button></div>' +
       '<div class="pct-msg" role="status"></div>' +
       '<details class="pct-more"><summary><b>Keep colours and holes</b> (one-time setup, 3 steps)</summary><ol>' +
-      '<li><b>Save the export button.</b> Open the <a href="' + BASE + '" target="_blank" rel="noopener">Tinkercad to PrintCAD page</a>.' +
+      '<li><b>Save the export button.</b> Open the <a href="' + BASE + '" target="_blank" rel="noopener">Tinkercad to PrintCaddy page</a>.' +
       '<div class="pct-two"><div><b>Computer:</b> drag the blue <i>Export</i> button up to your bookmarks bar.' + img("bookmark-desktop", "Drag the blue button to the bookmarks bar") + '</div>' +
       '<div><b>iPad or phone:</b> tap <i>Copy bookmark code</i>, bookmark any page, then edit that bookmark and paste the code as its address.' + img("bookmark-mobile", "Copy the code and paste it into a bookmark") + '</div></div></li>' +
       '<li><b>Open your design in Tinkercad</b> and click (or tap) the bookmark. A file downloads.' + img("click-bookmark", "Click the bookmark in Tinkercad") + '</li>' +

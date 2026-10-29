@@ -1,4 +1,4 @@
-/* PrintCAD "Image to SVG": trace a picture into a drawing, preview it, download it or add it to the design.
+/* PrintCaddy "Image to SVG": trace a picture into a drawing, preview it, download it or add it to the design.
    Uses imagetracerjs (public domain, Unlicense) loaded on first use. Everything runs in the browser. */
 (function () {
   var MAX = 700, lib = null, state = null, timer = 0;

@@ -1,13 +1,13 @@
-/* PrintCAD updates: notice a newer published build and switch to it without clearing site data.
+/* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202610291458-4a09c73c", busy = false, pending = false;
+  var BUILD = "202610291752-207c9c84", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
     if (document.querySelector(".pcup")) return;
     var d = document.createElement("div"); d.className = "pcup"; d.setAttribute("role", "status");
-    d.innerHTML = '<span>A new version of PrintCAD is ready.</span><button type="button">Reload</button>';
+    d.innerHTML = '<span>A new version of PrintCaddy is ready.</span><button type="button">Reload</button>';
     d.querySelector("button").onclick = reload;
     d.style.cssText = "position:fixed;z-index:2147483000;left:50%;bottom:calc(56px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:10px;align-items:center;padding:8px 10px 8px 14px;border-radius:10px;background:#2b2218;color:#fff;font:13px system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);max-width:calc(100vw - 20px)";
     d.querySelector("button").style.cssText = "border:0;border-radius:7px;padding:6px 12px;background:#e8892c;color:#fff;font:600 13px system-ui,sans-serif";

@@ -1,4 +1,4 @@
-/* PrintCAD tool tips: the tool's name and a one-line description. Mouse: after ~400 ms of hovering.
+/* PrintCaddy tool tips: the tool's name and a one-line description. Mouse: after ~400 ms of hovering.
    Touch: press and hold; the hold shows the tip and does not run the tool. */
 (function () {
   var D = {

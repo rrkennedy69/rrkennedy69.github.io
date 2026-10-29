@@ -1,4 +1,4 @@
-/* PrintCAD: a friendly notice after importing a very detailed mesh. It never blocks the import. */
+/* PrintCaddy: a friendly notice after importing a very detailed mesh. It never blocks the import. */
 (function () {
   var SAVE_LIMIT = 3333333;      // .lyl files hold at most 30,000,000 mesh numbers per object (9 per triangle)
   var SAVE_NEAR = 3000000;
@@ -9,8 +9,8 @@
     counts.forEach(function (c) { total += c; if (c > max) max = c; });
     var limit = d.booleanLimit || 250000, phone = document.documentElement.classList.contains("printcad-phone");
     var msgs = [], settings = false, bad = false;
-    if (max > SAVE_LIMIT) { bad = true; msgs.push("This model is too detailed to save in a PrintCAD design (the limit is about 3.3 million triangles per object). You can keep working with it now, but it won't be kept when the design is saved. Simplify it in your slicer or a mesh tool (for example Blender's Decimate or Meshmixer's Reduce) to keep it in a design."); }
-    else if (max >= SAVE_NEAR) msgs.push("This model is close to the most PrintCAD can save in a design (about 3.3 million triangles per object). If saving fails, simplify it in your slicer or a mesh tool first.");
+    if (max > SAVE_LIMIT) { bad = true; msgs.push("This model is too detailed to save in a PrintCaddy design (the limit is about 3.3 million triangles per object). You can keep working with it now, but it won't be kept when the design is saved. Simplify it in your slicer or a mesh tool (for example Blender's Decimate or Meshmixer's Reduce) to keep it in a design."); }
+    else if (max >= SAVE_NEAR) msgs.push("This model is close to the most PrintCaddy can save in a design (about 3.3 million triangles per object). If saving fails, simplify it in your slicer or a mesh tool first.");
     if (max > limit) { settings = true; msgs.push("Holes and combining (group, cut, intersect) use up to " + fmt(limit) + " triangles per object, so they may be slow or turned off for this one. You can raise the limit in Settings → \"Cut imported meshes up to\"."); }
     if (phone && total > PHONE_LIMIT) msgs.push("Phones have limited memory, so a model this large may make the page slow or reload. A computer will handle it better.");
     if (!msgs.length) return;
