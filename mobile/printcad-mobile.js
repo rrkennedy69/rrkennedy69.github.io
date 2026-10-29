@@ -14,14 +14,27 @@
   function sections() { return bar ? [].slice.call(bar.querySelectorAll(".toolbar-section")).filter(function (s) { return s.offsetParent !== null; }) : []; }
   function go(i) { secs = sections(); if (!secs.length) return; i = Math.max(0, Math.min(secs.length - 1, i));
     bar.scrollTo({ left: secs[i].offsetLeft - parseFloat(getComputedStyle(bar).paddingLeft || 0), behavior: "smooth" }); }
+  // Modify is laid out in two rows: its width is half of its buttons (measured again whenever they change size).
   function modifyWidth() {
-    var m = bar && bar.querySelector('.toolbar-section[data-group="modify"] .toolbar-section-tools'); if (!m || m.dataset.pcm) return;
+    var m = bar && bar.querySelector('.toolbar-section[data-group="modify"] .toolbar-section-tools'); if (!m) return;
     var kids = [].slice.call(m.children); if (kids.length < 2) return;
     var w = 0; kids.forEach(function (k) { w += k.getBoundingClientRect().width; });
-    m.dataset.w = Math.ceil(w / 2 + 40) + "px"; m.style.width = m.dataset.w; m.dataset.pcm = "1";
+    if (w < kids.length * 12) return; // icons not laid out yet
+    var v = Math.ceil(w / 2 + 40) + "px"; if (m.dataset.w !== v) { m.dataset.w = v; if (bar.clientWidth < 600) m.style.width = v; }
+  }
+  // The tools strip is as tall as its tallest section plus room for the page dots underneath, never a fixed guess.
+  var lastH = 0;
+  function fitHeight() {
+    if (!bar) return; var cs = getComputedStyle(bar), top = parseFloat(cs.paddingTop) || 0, max = 0;
+    [].slice.call(bar.querySelectorAll(".toolbar-section")).forEach(function (s) { if (s.offsetParent === null) return; var st = s.getBoundingClientRect().top, lo = st;
+      [].slice.call(s.children).forEach(function (c) { var r = c.getBoundingClientRect(); if (r.height) lo = Math.max(lo, r.bottom + (parseFloat(getComputedStyle(c).marginBottom) || 0)); });
+      max = Math.max(max, lo - st); });
+    if (max < 20) return;
+    var h = Math.ceil(top + max + 14); // 14 = gap + dot strip below the icons
+    if (h !== lastH) { lastH = h; root.style.setProperty("--editor-toolbar-tools-height", h + "px", "important"); window.dispatchEvent(new Event("resize")); }
   }
   function update() {
-    raf = 0; if (!bar) return;
+    raf = 0; if (!bar) return; modifyWidth(); fitHeight();
     secs = sections(); var x = bar.scrollLeft + parseFloat(getComputedStyle(bar).paddingLeft || 0) + 4, i = 0;
     secs.forEach(function (s, k) { if (s.offsetLeft <= x) i = k; });
     if (bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 2) { // at the end: the last fully visible section
@@ -54,10 +67,12 @@
   function attach() {
     var b = document.querySelector(".secondary-toolbar .toolbar-mode-content");
     if (b !== bar) { if (bar) bar.removeEventListener("scroll", sched); bar = b; active = -1; if (bar) { ui(); bar.addEventListener("scroll", sched, { passive: true }); modifyWidth(); } }
-    if (bar) { modifyWidth(); frame(); sched(); } else root.classList.remove("pcm-tall");
+    if (bar) { modifyWidth(); fitHeight(); frame(); sched(); } else root.classList.remove("pcm-tall");
   }
   new MutationObserver(function () { attach(); }).observe(document.documentElement, { childList: true, subtree: true });
-  addEventListener("resize", sched);
+  addEventListener("resize", sched); addEventListener("orientationchange", function () { setTimeout(sched, 300); });
+  if (window.ResizeObserver) { var ro = new ResizeObserver(sched); var watch = function () { var b = document.querySelector(".secondary-toolbar .toolbar-mode-content"); if (b && !b.__pcmRO) { b.__pcmRO = 1; ro.observe(b); [].slice.call(b.querySelectorAll(".toolbar-section")).forEach(function (s) { ro.observe(s); }); } }; new MutationObserver(watch).observe(document.documentElement, { childList: true, subtree: true }); watch(); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(sched);
   attach();
   window.PrintCADMobile = { go: function (i) { go(i); }, state: function () { return { active: active, count: sections().length, tall: root.classList.contains("pcm-tall") }; } };
 })();
