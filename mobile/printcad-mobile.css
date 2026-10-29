@@ -1,0 +1,62 @@
+/* PrintCAD phone layout: slim top bar whose sections swipe as pages, slim bottom bar with the view controls. */
+html.printcad-phone {
+  --toolbar-scale: .72 !important;
+  --toolbar-icon-size: 26px !important;
+  --sprite-icon-size: 25px !important;
+  --editor-toolbar-title-height: 36px !important;
+  --editor-toolbar-tools-height: 52px !important;
+  --editor-footer-height: 44px !important;
+}
+html.printcad-phone.pcm-tall { --editor-toolbar-tools-height: 86px !important; }
+html.printcad-phone .toolbar-title-row { height: 36px !important; overflow: hidden; }
+html.printcad-phone .toolbar-title-row > * { max-height: 36px; }
+html.printcad-phone .toolbar-mode-content {
+  flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important;
+  height: var(--editor-toolbar-tools-height) !important; min-height: 0 !important;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth; overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; touch-action: pan-x;
+  transition: height .18s ease; padding: 0 18px !important; scroll-padding: 0 18px; box-sizing: border-box;
+}
+html.printcad-phone .toolbar-mode-content::-webkit-scrollbar { display: none; }
+html.printcad-phone .toolbar-mode-content > .tool-group { display: contents !important; }
+html.printcad-phone .toolbar-section {
+  flex: 0 0 auto !important; height: auto !important; min-width: 0 !important;
+  scroll-snap-align: start; scroll-snap-stop: always;
+}
+html.printcad-phone .toolbar-section-label { height: 13px !important; padding: 1px 4px 0 !important; font-size: 9px !important; line-height: 12px !important; }
+html.printcad-phone .toolbar-section-tools { height: 34px !important; margin: 0 3px 3px !important; padding: 0 2px !important; border-width: 1.5px !important; border-radius: 9px !important; }
+html.printcad-phone .toolbar-section .action-buttons { gap: 1px !important; }
+html.printcad-phone .toolbar-section button { min-width: 0 !important; min-height: 0 !important; }
+html.printcad-phone .toolbar-section[data-group="modify"] .toolbar-section-tools { flex-wrap: wrap !important; height: 68px !important; align-content: center; }
+html.printcad-phone .toolbar-section[data-group="modify"] .toolbar-section-tools > * { flex: 0 0 auto; }
+html.printcad-phone.pcm-tall .toolbar-section:not([data-group="modify"]) { align-self: flex-start; }
+/* Bottom bar: the view controls in one row; the legal footer is hidden. */
+html.printcad-phone .editor-legal { display: none !important; }
+html.printcad-phone .camera-controls {
+  position: fixed !important; top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+  height: 44px; box-sizing: border-box; flex-direction: row !important; justify-content: safe center; align-items: center;
+  overflow-x: auto; overflow-y: visible; border-radius: 0 !important; padding: 2px 6px !important; gap: 0 !important;
+  scrollbar-width: none; touch-action: pan-x; box-shadow: 0 -1px 0 #e7dfd0 !important;
+}
+html.printcad-phone .camera-controls::-webkit-scrollbar { display: none; }
+html.printcad-phone .camera-controls > button, html.printcad-phone .camera-controls > div > button { width: 38px !important; height: 38px !important; flex: 0 0 auto; }
+html.printcad-phone .camera-controls > div { display: flex; flex: 0 0 auto; }
+html.printcad-phone .view-cube { transform: scale(.7); transform-origin: top left; }
+/* Page indicators */
+.pcm-ind { display: none; }
+html.printcad-phone[data-printcad-view="editor"] .pcm-ind, html.printcad-phone body[data-printcad-view="editor"] .pcm-ind { display: block; }
+.pcm-arrow { position: fixed; z-index: 60; top: calc(var(--editor-toolbar-title-height) + 1px); height: calc(var(--editor-toolbar-tools-height) - 2px); width: 18px;
+  border: 0; padding: 0; background: rgba(250,247,243,.92); color: #5a3917; font: 700 16px/1 system-ui, sans-serif; transition: height .18s ease, opacity .15s; }
+.pcm-prev { left: 0; } .pcm-next { right: 0; }
+.pcm-arrow[disabled] { opacity: .25; }
+.pcm-dots { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); top: calc(var(--editor-toolbar-title-height) + var(--editor-toolbar-tools-height) - 5px);
+  display: flex !important; gap: 4px; pointer-events: none; transition: top .18s ease; }
+.pcm-dots i { width: 4px; height: 4px; border-radius: 50%; background: #c9b9a6; }
+.pcm-dots i.on { background: #5a3917; width: 10px; border-radius: 2px; }
+
+@media (orientation: landscape) and (max-height: 540px) {
+  html.printcad-phone { --editor-toolbar-title-height: 28px !important; --editor-toolbar-tools-height: 44px !important; --editor-footer-height: 38px !important; }
+  html.printcad-phone .toolbar-section-label { display: none !important; }
+  html.printcad-phone .camera-controls { height: 38px !important; }
+  html.printcad-phone .camera-controls button { width: 34px !important; height: 34px !important; }
+}
