@@ -72,3 +72,12 @@ html.printcad-phone .camera-controls { height: calc(44px + var(--pcm-safe-bottom
   html.printcad-phone .camera-controls { height: calc(38px + var(--pcm-safe-bottom)) !important; }
   html.printcad-phone .pcm-prev { left: env(safe-area-inset-left, 0px); } html.printcad-phone .pcm-next { right: env(safe-area-inset-right, 0px); }
 }
+
+/* Tablets: keep the header and tools clear of the iPadOS status bar (installed app) with a small gap, and draw them opaque and crisp. */
+html.printcad-tablet { --pct-top: calc(env(safe-area-inset-top, 0px) + 4px); }
+html.printcad-tablet body { padding-top: var(--pct-top); background-clip: border-box; }
+html.printcad-tablet .secondary-toolbar { top: var(--pct-top) !important; }
+html.printcad-tablet .editor-body { top: calc(var(--editor-toolbar-height) + var(--pct-top)) !important; }
+html.printcad-tablet .secondary-toolbar, html.printcad-tablet .toolbar-title-row { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; opacity: 1 !important; -webkit-font-smoothing: antialiased; transform: none !important; }
+html.printcad-tablet body[data-printcad-view="editor"] { padding-top: 0; }
+html.printcad-tablet body[data-printcad-view="editor"]::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--pct-top); background: var(--toolbar-bg, #faf7f3); z-index: 19; }

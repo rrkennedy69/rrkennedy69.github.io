@@ -9,3 +9,9 @@
     if (!isTablet && (phoneUa || (touch && small)) && !/printcad-desktop=1/.test(location.search)) document.documentElement.classList.add("printcad-phone");
   } catch (e) {}
 })();
+/* Tablets (iPad, Android tablets): mark them so the header can clear the status bar. */
+(function () {
+  var ua = navigator.userAgent || "", touch = (navigator.maxTouchPoints || 0) > 1;
+  var tablet = /iPad/.test(ua) || (/Macintosh/.test(ua) && touch) || (/Android/.test(ua) && !/Mobile/.test(ua));
+  if (tablet && !document.documentElement.classList.contains("printcad-phone")) document.documentElement.classList.add("printcad-tablet");
+})();
