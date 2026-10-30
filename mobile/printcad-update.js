@@ -1,7 +1,7 @@
 /* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202610300108-0a6431e6", busy = false, pending = false;
+  var BUILD = "202610300117-b122f6ef", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
