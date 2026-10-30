@@ -89,7 +89,16 @@
     st.refs = (b.footprints ? b.footprints() : []) || [];
     var on = function (t, f) { st.svg.addEventListener(t, f); };
     on("pointerdown", down); on("pointermove", move); on("pointerup", up); on("pointercancel", up);
-    on("wheel", function (e) { e.preventDefault(); zoomAt(Math.pow(1.0015, -e.deltaY), e.clientX, e.clientY); });
+    // iPad trackpad: two-finger scroll pans, pinch (ctrl+wheel or Safari gesture) zooms; a mouse wheel elsewhere zooms.
+    var padOS = navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent);
+    on("wheel", function (e) { e.preventDefault();
+      if (padOS && !e.ctrlKey) { st.view.cx += e.deltaX / st.view.s; st.view.cy += e.deltaY / st.view.s; render(); return; }
+      zoomAt(Math.pow(e.ctrlKey ? 1.01 : 1.0015, -e.deltaY), e.clientX, e.clientY); });
+    var gs = 1;
+    on("gesturestart", function (e) { e.preventDefault(); gs = 1; });
+    on("gesturechange", function (e) { e.preventDefault(); if (e.scale > 0) { var r = st.svg.getBoundingClientRect(); zoomAt(e.scale / gs, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2); gs = e.scale; } });
+    on("gestureend", function (e) { e.preventDefault(); });
+    on("contextmenu", function (e) { e.preventDefault(); });
     on("dblclick", function () { if (st.tool === "poly" && st.cur) closeCur(); });
     st.onKey = function (e) {
       if (e.target && /INPUT/.test(e.target.tagName)) return;
