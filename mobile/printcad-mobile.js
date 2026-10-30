@@ -5,10 +5,9 @@
   var bar = null, prev, next, dots, secs = [], active = -1, raf = 0;
   function ui() {
     if (prev) return;
-    prev = el("button", "pcm-ind pcm-arrow pcm-prev", "‹"); next = el("button", "pcm-ind pcm-arrow pcm-next", "›");
+    // PrintCaddy: no arrow buttons; the strip scrolls by touch. Stand-ins keep the code below simple.
+    prev = {}; next = {};
     dots = el("div", "pcm-ind pcm-dots", "");
-    prev.setAttribute("aria-label", "Previous tools"); next.setAttribute("aria-label", "Next tools");
-    prev.onclick = function () { go(active - 1); }; next.onclick = function () { go(active + 1); };
   }
   function el(t, c, txt) { var e = document.createElement(t); e.className = c; e.textContent = txt; if (t === "button") e.type = "button"; document.body.appendChild(e); return e; }
   function sections() { return bar ? [].slice.call(bar.querySelectorAll(".toolbar-section")).filter(function (s) { return s.offsetParent !== null; }) : []; }

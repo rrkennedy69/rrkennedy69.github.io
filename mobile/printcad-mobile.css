@@ -88,3 +88,12 @@ html.printcad-tablet body[data-printcad-view="editor"]::before { content: ""; po
    work area is under 600 px tall. On phones they stay one swipeable row along the bottom. */
 html.printcad-phone .camera-controls { display: flex !important; grid-template-columns: none !important; transform: none !important; flex-wrap: nowrap !important; }
 html.printcad-phone .camera-controls > * { order: 0 !important; }
+
+/* pcm-inspector: no arrow buttons on the tools strip; it scrolls by touch. */
+.pcm-arrow { display: none !important; }
+html.printcad-phone .toolbar-mode-content { padding-left: 8px !important; padding-right: 8px !important; scroll-padding: 0 8px; }
+/* The object panel on a phone: a narrow side panel, short, scrolling inside; folded it is a small bar with the name. */
+html.printcad-phone .shape-inspector { left: auto !important; right: 4px !important; top: 4px !important; bottom: auto !important;
+  width: min(360px, calc(66vw / var(--toolbar-scale, 1))) !important; max-height: calc(62% / var(--toolbar-scale, 1)) !important;
+  overflow-y: auto !important; border: 1px solid #e9e2d6; border-radius: 10px; }
+html.printcad-phone .shape-inspector.minimized { width: auto !important; max-width: calc(60vw / var(--toolbar-scale, 1)) !important; max-height: none !important; overflow: hidden !important; }
