@@ -7,6 +7,10 @@
   "use strict";
   var BASE = "/tinkercad/";
   var ACCEPT = ".stl,.obj,.mtl,.zip,.svg,.3mf,.lyl,.json";
+  /* iOS/iPadOS map `accept` to UTIs and grey out .stl/.3mf/.lyl in the Files app, so leave the picker open there
+   * (an iPad in desktop mode says Macintosh but has touch points) and check the ending after selection. */
+  var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  var OK_EXT = /\.(stl|obj|mtl|zip|svg|3mf|lyl|json)$/i;
   function loadScript(src) {
     return new Promise(function (ok, bad) {
       if (document.querySelector('script[src="' + src + '"]')) return ok();
@@ -131,7 +135,7 @@
       '</ol></details>' +
       '<p class="pct-note">Tinkercad does not share its undo history or shape settings, so shapes arrive as solid pieces you can move, resize, colour and combine.</p>' +
       '<p style="text-align:right;margin:8px 0 0"><button type="button" class="pct-close">Close</button></p>' +
-      '<input type="file" multiple hidden accept="' + ACCEPT + '"></div>';
+      '<input type="file" multiple hidden' + (IOS ? '' : ' accept="' + ACCEPT + '"') + '></div>';
     var input = d.querySelector("input"), msg = d.querySelector(".pct-msg");
     function say(t) { msg.textContent = t; }
     d.querySelector(".pct-pick").onclick = function () { input.click(); };
@@ -146,6 +150,8 @@
     };
     function run(files) {
       if (!files.length) return;
+      var bad = files.filter(function (f) { return !OK_EXT.test(f.name); });
+      if (bad.length) { say("Can't import " + bad.map(function (f) { return f.name; }).join(", ") + ". Choose an STL, OBJ (+MTL or .zip), SVG, 3MF, .lyl or Tinkercad .json file."); return; }
       prepare(files, say).then(function (ready) {
         say("Importing…");
         return Promise.resolve(importFiles(ready));
