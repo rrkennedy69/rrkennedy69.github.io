@@ -83,13 +83,53 @@
     doc.assets = (doc.assets || []).filter(function (a) { return a.kind !== "derived-mesh" || used[a.id]; });
     return doc;
   }
+  /* ---- every Tinkercad import comes in tan (easier to see detail); holes stay holes ---- */
+  var TAN = "#f2caa0", TAN_KD = "Kd 0.949 0.792 0.627", TAN_NUM = String(0xf2caa0);
+  function tanDoc(doc) {
+    var changed = false;
+    (doc.states || []).forEach(function (st) {
+      (st.nodes || []).forEach(function (n) {
+        var d = n.definition; if (!d || d.hole) return;
+        if (typeof d.color === "string" && d.color.toLowerCase() !== TAN) { d.color = TAN; changed = true; }
+        if (d.multicolor) { d.multicolor = false; changed = true; }
+      });
+    });
+    return changed;
+  }
+  function tanMtl(t) { return t.replace(/^(\s*)Kd\s+.*$/gm, "$1" + TAN_KD); }
+  function tanObj(t) {
+    return t.replace(/^(\s*usemtl\s+)color_\d+\s*$/gm, "$1color_" + TAN_NUM)
+      .replace(/^(v\s+\S+\s+\S+\s+\S+)\s+\S+\s+\S+\s+\S+.*$/gm, "$1");
+  }
+  function tan3mf(t) { return t.replace(/\b(displaycolor|color)(\s*=\s*")#[0-9a-fA-F]{3,8}"/g, "$1$2" + TAN + '"'); }
+  function tanSvg(t) {
+    var keep = /^(none|transparent|inherit|currentcolor|url\()/i;
+    return t.replace(/\b(fill|stroke)(\s*=\s*")([^"]*)"/g, function (m, k, eq, v) { return keep.test(v.trim()) ? m : k + eq + TAN + '"'; })
+      .replace(/\b(fill|stroke)(\s*:\s*)([^;"'}]+)/g, function (m, k, c, v) { return keep.test(v.trim()) ? m : k + c + TAN; });
+  }
+  function textFile(f, fix) { return f.text().then(function (t) { return new File([fix(t)], f.name, { type: f.type }); }); }
+  function zipFile(f, fixEntry) {
+    return f.arrayBuffer().then(readZip).then(function (entries) {
+      var dec = new TextDecoder(), enc = new TextEncoder();
+      return new File([writeZip(entries.map(function (e) { var fx = fixEntry(e[0]); return fx ? [e[0], enc.encode(fx(dec.decode(e[1])))] : e; }))], f.name, { type: f.type || "application/zip" });
+    }).catch(function () { return f; });
+  }
+  function tanFile(f) {
+    if (/\.mtl$/i.test(f.name)) return textFile(f, tanMtl);
+    if (/\.obj$/i.test(f.name)) return textFile(f, tanObj);
+    if (/\.svg$/i.test(f.name)) return textFile(f, tanSvg);
+    if (/\.3mf$/i.test(f.name)) return zipFile(f, function (n) { return /\.model$/i.test(n) ? tan3mf : null; });
+    if (/\.zip$/i.test(f.name)) return zipFile(f, function (n) { return /\.mtl$/i.test(n) ? tanMtl : /\.obj$/i.test(n) ? tanObj : /\.svg$/i.test(n) ? tanSvg : /\.3mf$/i.test(n) ? null : null; });
+    return Promise.resolve(f); // STL carries no colour; it gets the app's default (tan)
+  }
   function ungroupLyl(file) {
     return file.arrayBuffer().then(readZip).then(function (entries) {
       var pj = entries.find(function (e) { return e[0] === "project.json"; }); if (!pj) return file;
       var doc = JSON.parse(new TextDecoder().decode(pj[1]));
       if (!/tinkercad/i.test(String(doc.createdWithVersion || ""))) return file; // only Tinkercad exports
       var orig = {}; (doc.assets || []).forEach(function (a) { orig[a.path] = 1; });
-      if (!ungroupDoc(doc)) return file;
+      var recolored = tanDoc(doc), ungrouped = !!ungroupDoc(doc);
+      if (!recolored && !ungrouped) return file;
       var keep = {}; (doc.assets || []).forEach(function (a) { keep[a.path] = 1; });
       var out = entries.filter(function (e) { return e[0] === "project.json" || keep[e[0]] || !orig[e[0]]; })
         .map(function (e) { return e[0] === "project.json" ? [e[0], new TextEncoder().encode(JSON.stringify(doc))] : e; });
@@ -100,7 +140,7 @@
   function prepare(files, say) {
     return Promise.all(files.map(function (f) {
       if (/\.lyl$/i.test(f.name)) return ungroupLyl(f);
-      if (!/\.json$/i.test(f.name)) return f;
+      if (!/\.json$/i.test(f.name)) return tanFile(f);
       say("Converting " + f.name + "…");
       return f.text().then(function (txt) {
         var capture = JSON.parse(txt);
@@ -166,5 +206,5 @@
     "@media(max-width:560px){.pct-two{grid-template-columns:1fr}}.pct-drop{border:2px dashed #1a73e8;border-radius:10px;padding:16px;text-align:center;margin:8px 0;color:#1a73e8;font-weight:600}" +
     ".pct-drop.on{background:#e8f0fe}.pct-drop button{margin-top:8px}.pct-msg{min-height:1.2em}.pct-note{color:#777;font-size:12px;margin:8px 0 0}.pct-more summary{cursor:pointer;margin:6px 0}";
   document.head.appendChild(css);
-  window.PrintCADTinkercad = { open: open, prepare: prepare, ungroupLyl: ungroupLyl };
+  window.PrintCADTinkercad = { open: open, prepare: prepare, ungroupLyl: ungroupLyl, tanFile: tanFile };
 })();
