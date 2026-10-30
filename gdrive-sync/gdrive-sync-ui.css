@@ -5,3 +5,4 @@
 .pcs-dlg{position:fixed;inset:0;background:#0005;z-index:10000;display:flex;align-items:center;justify-content:center}
 .pcs-box{background:#fff;color:#222;border-radius:10px;padding:16px;min-width:320px;max-width:90vw;max-height:80vh;overflow:auto;font:13px system-ui,sans-serif}
 .pcs-box li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #eee}
+.pcs-reconnect .pcs-dot{background:#e90}

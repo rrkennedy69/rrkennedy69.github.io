@@ -79,20 +79,22 @@
 
   /* ---------- UI ---------- */
   var el = {}, statusText = {
-    "signed-out": "Not signed in", connecting: "Connecting…", "signed-in": "Google Drive on",
+    "signed-out": "Not signed in", reconnect: "Drive paused – tap Reconnect", connecting: "Connecting…", "signed-in": "Google Drive on",
     pending: "Changes waiting…", saving: "Saving to Drive…", saved: "Saved to Drive", error: "Drive error", offline: "Offline – will retry"
   };
   function btn(label, fn, cls) { var b = document.createElement("button"); b.type = "button"; b.textContent = label; b.onclick = fn; if (cls) b.className = cls; return b; }
   var panels = [], lastSt = "signed-out";
   function render(st) {
     lastSt = st = st || lastSt;
-    var on = S.isSignedIn();
+    var on = S.isSignedIn(), rc = !on && S.wantsDrive && S.wantsDrive();
+    if (st === "signed-out" && rc) st = "reconnect";
     var startPage = document.body.dataset.printcadView ? document.body.dataset.printcadView === "start" : !document.querySelector("canvas");
     panels = panels.filter(function (P) { return P.corner || document.body.contains(P.w); });
     panels.forEach(function (P) {
       P.w.className = (P.corner ? "pcs-w pcd-w pcd-corner pcs-" : "pcd-settings pcs-") + st;
       if (!P.busy) P.txt.textContent = statusText[st] || st;
       P.inB.style.display = on ? "none" : "";
+      P.inB.textContent = rc ? "Reconnect Drive" : "Sign in with Google";
       P.outB.style.display = P.allB.style.display = P.resB.style.display = on ? "" : "none";
       P.allB.disabled = P.resB.disabled = !app();
       if (P.corner) P.w.dataset.page = startPage ? "start" : "editor";
@@ -139,7 +141,7 @@
     w.setAttribute("role", "region"); w.setAttribute("aria-label", "Google Drive backup");
     var dot = document.createElement("span"); dot.className = "pcs-dot";
     P.txt = document.createElement("span"); P.txt.className = "pcd-txt";
-    P.inB = btn("Sign in with Google", function () { S.signIn().catch(function (e) { console.warn("PrintCAD sign-in:", e); }); }, "pcd-signin");
+    P.inB = btn("Sign in with Google", function () { (S.wantsDrive && S.wantsDrive() ? S.reconnect() : S.signIn()).catch(function (e) { console.warn("PrintCAD sign-in:", e); }); }, "pcd-signin");
     P.allB = btn("Back up all", function () {
       P.allB.disabled = true; P.busy = true;
       backupAll().then(function (n) { P.txt.textContent = "Backed up " + n + " designs"; }, function (e) { P.txt.textContent = "Backup failed: " + (e && e.message || e); })

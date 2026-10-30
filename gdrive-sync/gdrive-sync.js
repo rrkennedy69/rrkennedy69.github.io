@@ -10,6 +10,24 @@
   var LS = 'printcad.gsync';
   function ls(k, v) { try { var o = JSON.parse(root.localStorage.getItem(LS) || '{}'); if (v === undefined) return o[k]; o[k] = v; root.localStorage.setItem(LS, JSON.stringify(o)); } catch (e) {} }
   function emit(st, detail) { S.status = st; S.listeners.slice().forEach(function (cb) { try { cb(st, detail); } catch (e) {} }); }
+  var DESK = !!(root.navigator && /Electron/i.test(root.navigator.userAgent || ''));
+  var IOS = !!(root.navigator && (/iP(hone|ad|od)/.test(root.navigator.userAgent || '') || (root.navigator.platform === 'MacIntel' && root.navigator.maxTouchPoints > 1)));
+  function saveTok() { ls('tok', S.token ? { t: S.token, e: S.exp } : null); }
+  function loadTok() { var o = ls('tok'); if (o && o.t && o.e > Date.now() + 30000) { S.token = o.t; S.exp = o.e; return true; } return false; }
+  function fresh() { return !!S.token && Date.now() < S.exp; }
+  function schedule() { // proactive refresh while open: desktop can refresh silently; web needs a user gesture
+    clearTimeout(S.rt); if (!S.token) return;
+    var ms = Math.max(5000, S.exp - Date.now() - 5 * 60000);
+    S.rt = setTimeout(function () {
+      if (DESK) getToken(false).then(function () { emit('signed-in'); }, function () {});
+      else if (!fresh()) emit('signed-out', { reconnect: true });
+    }, Math.min(ms, 2147483000)); if (S.rt && S.rt.unref) S.rt.unref();
+  }
+  function fetchHint() {
+    if (S.hint) return;
+    root.fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)', { headers: { Authorization: 'Bearer ' + S.token } })
+      .then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { var m = j && j.user && j.user.emailAddress; if (m) { S.hint = m; ls('hint', m); } }).catch(function () {});
+  }
   function online() { return !root.navigator || root.navigator.onLine !== false; }
 
   function loadGIS() {
@@ -27,7 +45,7 @@
     if (S.tc) return S.tc;
     S.tc = root.google.accounts.oauth2.initTokenClient({ client_id: S.clientId, scope: SCOPE, callback: function (r) {
       var p = S.pend; S.pend = null; if (!p) return;
-      if (r && r.access_token) { S.token = r.access_token; S.exp = Date.now() + ((r.expires_in || 3600) - 60) * 1000; p.ok(r.access_token); }
+      if (r && r.access_token) { S.token = r.access_token; S.exp = Date.now() + ((r.expires_in || 3600) - 60) * 1000; saveTok(); schedule(); try { fetchHint(); } catch (e) {} p.ok(r.access_token); }
       else p.no(new Error((r && r.error) || 'Sign-in failed'));
     }, error_callback: function (e) { var p = S.pend; S.pend = null; if (p) p.no(new Error((e && e.type) || 'Sign-in cancelled')); } });
     return S.tc;
@@ -46,16 +64,18 @@
   }
   function gfetch(url, opt, retried) {
     opt = opt || {};
-    var tk = (S.token && Date.now() < S.exp) ? Promise.resolve(S.token) : getToken(false);
+    var tk = fresh() ? Promise.resolve(S.token) : (DESK || userGesture() ? getToken(false) : Promise.reject(needReconnect()));
     return tk.then(function (t) {
       var h = Object.assign({}, opt.headers || {}, { Authorization: 'Bearer ' + t });
       return root.fetch(url, Object.assign({}, opt, { headers: h }));
     }).then(function (r) {
-      if (r.status === 401 && !retried) { S.token = null; S.exp = 0; return gfetch(url, opt, true); }
+      if (r.status === 401 && !retried) { S.token = null; S.exp = 0; saveTok(); return gfetch(url, opt, true); }
       if (!r.ok) { var e = new Error('Drive HTTP ' + r.status); e.status = r.status; throw e; }
       return r;
     });
   }
+  function userGesture() { var u = root.navigator && root.navigator.userActivation; return !!(u && u.isActive); }
+  function needReconnect() { var e = new Error('Drive needs reconnecting – tap Reconnect Drive'); e.reconnect = true; emit('signed-out', { reconnect: true }); return e; }
   function esc(n) { return String(n).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
   function findByName(name) {
     if (S.ids[name]) return Promise.resolve(S.ids[name]);
@@ -81,7 +101,7 @@
   function flush() {
     clearTimeout(S.timer); S.timer = null;
     var names = Object.keys(S.queue); if (!names.length) return Promise.resolve([]);
-    if (!isSignedIn()) { emit('signed-out', { pending: names.length }); return Promise.resolve([]); }
+    if (!isSignedIn()) { emit('signed-out', { pending: names.length, reconnect: wantsDrive() }); return Promise.resolve([]); }
     if (!online()) { emit('offline', { pending: names.length }); return Promise.resolve([]); }
     var q = S.queue; S.queue = {}; emit('saving');
     return Promise.all(names.map(function (n) { return upload(n, q[n]); })).then(function (res) {
@@ -91,26 +111,43 @@
       emit(online() ? 'error' : 'offline', { error: e }); throw e;
     });
   }
-  function isSignedIn() { return !!S.token; }
+  function isSignedIn() { return fresh(); }
+  function wantsDrive() { return !!ls('on'); }
 
   var API_ = {
     init: function (o) {
       o = o || {}; S.clientId = o.clientId || ''; if (o.appName) S.appName = o.appName; if (o.debounceMs != null) S.debounce = o.debounceMs;
       S.hint = ls('hint') || '';
       if (root.addEventListener) root.addEventListener('online', function () { if (Object.keys(S.queue).length) flush().catch(function () {}); });
-      if (ls('on') && S.clientId) { // silent reconnect
+      if (ls('on') && S.clientId) {
+        if (loadTok()) { schedule(); emit('signed-in'); loadGIS().catch(function () {}); return flush().then(function () { return true; }, function () { return true; }); }
+        if (!DESK) { // web: GIS needs a popup, which iOS/most browsers block without a tap. Don't nag; offer Reconnect.
+          loadGIS().catch(function () {});
+          if (root.addEventListener && !IOS) { // desktop browsers: refresh silently on the first click/keypress
+            var g = function () { root.removeEventListener('pointerdown', g, true); root.removeEventListener('keydown', g, true);
+              if (!fresh()) API_.reconnect().catch(function () {}); };
+            root.addEventListener('pointerdown', g, true); root.addEventListener('keydown', g, true);
+          }
+          emit('signed-out', { reconnect: true }); return Promise.resolve(false);
+        }
         emit('connecting');
         return getToken(false).then(function () { emit('signed-in'); return flush(); }).then(function () { return true; }, function () { emit('signed-out', { reconnect: true }); return false; });
       }
       emit('signed-out'); return Promise.resolve(false);
     },
+    reconnect: function () { // call from a tap: silent (prompt:'') re-grant using the remembered account
+      emit('connecting');
+      return getToken(false).then(function () { emit('signed-in'); return flush(); }).then(function () { return true; },
+        function (e) { emit('signed-out', { reconnect: true, error: e }); throw e; });
+    },
+    wantsDrive: wantsDrive,
     signIn: function () {
       emit('connecting');
       return getToken(true).then(function () { ls('on', true); emit('signed-in'); return flush(); }).then(function () { return true; },
         function (e) { emit('error', { error: e }); throw e; });
     },
     signOut: function () {
-      var t = S.token; S.token = null; S.exp = 0; S.ids = {}; ls('on', false);
+      var t = S.token; S.token = null; S.exp = 0; S.ids = {}; ls('on', false); ls('tok', null); ls('hint', ''); S.hint = ''; clearTimeout(S.rt);
       try { if (t && root.google && root.google.accounts) root.google.accounts.oauth2.revoke(t, function () {}); } catch (e) {}
       emit('signed-out');
     },
