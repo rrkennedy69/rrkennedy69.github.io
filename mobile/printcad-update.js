@@ -1,7 +1,7 @@
 /* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202610300117-b122f6ef", busy = false, pending = false;
+  var BUILD = "202610300126-5f1121ff", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
@@ -30,4 +30,27 @@
   setInterval(check, 5 * 60 * 1000);
   setTimeout(check, 1500);
   window.PrintCADUpdate = { build: BUILD, check: check };
+})();
+
+/* Build label: small muted text fixed bottom-left on the Home screen only (never in the editor). */
+(function () {
+  var BUILD = "202610300126-5f1121ff", desk = "", el = null;
+  function label() { var b = BUILD.indexOf("__") === 0 ? "dev" : BUILD; return (desk ? "Desktop v" + desk + " \u00b7 " : "") + "Build " + b; }
+  function sync() {
+    var home = !document.querySelector(".secondary-toolbar") && !!document.body;
+    if (!home) { if (el) { el.remove(); el = null; document.documentElement.classList.remove("pc-has-build"); } return; }
+    if (!el) {
+      el = document.createElement("div"); el.className = "pc-build-label"; el.setAttribute("aria-label", "App version");
+      el.style.cssText = "position:fixed;z-index:5;left:calc(8px + env(safe-area-inset-left,0px));bottom:calc(6px + env(safe-area-inset-bottom,0px));pointer-events:none;user-select:none;-webkit-user-select:none;font:11px/1.3 system-ui,sans-serif;color:rgba(110,96,80,.75);background:rgba(250,247,242,.85);padding:1px 6px;border-radius:6px;white-space:nowrap;max-width:calc(100vw - 16px);overflow:hidden;text-overflow:ellipsis";
+      document.body.appendChild(el); document.documentElement.classList.add("pc-has-build");
+      if (!document.getElementById("pc-build-style")) { var st = document.createElement("style"); st.id = "pc-build-style"; st.textContent = ".pc-has-build .dashboard-shell::after{content:\"\";display:block;height:calc(24px + env(safe-area-inset-bottom,0px))}"; document.head.appendChild(st); }
+    }
+    var t = label(); if (el.textContent !== t) el.textContent = t;
+  }
+  function start() {
+    sync(); new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
+    var d = window.printcaddyDesktop;
+    if (d && d.info) d.info().then(function (i) { if (i && i.version) { desk = i.version; sync(); } }).catch(function () {});
+  }
+  if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 })();
