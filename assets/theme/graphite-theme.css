@@ -7225,6 +7225,44 @@ html:where([data-theme="dark"][data-palette="graphite"])[data-palette="night"] b
   background: #000000;
 }
 
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-section,
+html[data-theme="dark"]:where([data-palette="graphite"]) .toolbar-section {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-section::before,
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-section::after {
+  border: 0;
+  box-shadow: none;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-section + .toolbar-section::before,
+:where(html[data-theme="dark"][data-palette="graphite"]) .tool-group + .tool-group .toolbar-section:first-child::before,
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-section[data-group]:not([data-row-start])::before {
+  background: var(--toolbar-divider, rgba(60, 64, 70, 0.22));
+}
+
+html[data-theme="dark"]:where([data-palette="graphite"]) {
+  --toolbar-divider: rgba(235, 235, 245, 0.18);
+}
+
+html:where([data-theme="dark"][data-palette="graphite"])[data-palette="night"] {
+  --toolbar-divider: #b00000;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .secondary-toolbar .toolbar-section-tools,
+:where(html[data-theme="dark"][data-palette="graphite"]) .secondary-toolbar .toolbar-section > .action-buttons,
+html[data-theme="dark"]:where([data-palette="graphite"]) .secondary-toolbar .toolbar-section-tools,
+html[data-theme="dark"]:where([data-palette="graphite"]) .secondary-toolbar .toolbar-section > .action-buttons {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
 :where(html[data-theme="dark"][data-palette="graphite"]) .dashboard-welcome-hide {
   color: #717171;
   background: transparent;
