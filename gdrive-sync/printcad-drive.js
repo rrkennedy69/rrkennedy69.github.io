@@ -8,39 +8,59 @@
   var S = window.PrintCADSync;
   var cfg = window.PRINTCAD_CONFIG || {};
   if (!S) { console.warn("PrintCAD: Drive sync module missing"); return; }
-  var MAP = "printcad.drive.names"; // projectId -> Drive file name last used
   var restoring = false;
-  function safe(n) { return String(n || "Untitled").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").slice(0, 80).trim() || "Untitled"; }
-  function fileName(id, name) { return safe(name) + "__" + id + ".lyl"; }
-  function parseName(f) { var m = /^(.*)__([^_].*)\.lyl$/.exec(f); return m ? { name: m[1], id: m[2] } : { name: f.replace(/\.lyl$/, ""), id: null }; }
-  function names() { try { return JSON.parse(localStorage.getItem(MAP) || "{}"); } catch (e) { return {}; } }
-  function setName(id, f) { var m = names(); m[id] = f; try { localStorage.setItem(MAP, JSON.stringify(m)); } catch (e) {} }
-
-  /* After a rename, delete the Drive copy stored under the old name once the new one is up. */
-  function dropOld(oldName) {
-    S.list().then(function (files) {
-      var oldPng = oldName.replace(/\.lyl$/, ".png");
-      files.forEach(function (f) { if (f.name === oldName || f.name === oldPng) S.remove(f.id).catch(function () {}); });
-    }).catch(function () {});
+  /* De-dup engine (printcad-drive-merge.js): one Drive file per design id, newest lastModified wins,
+   * older copies go to appData/old-duplicates instead of being deleted. */
+  var engineP = null;
+  function engine() {
+    if (engineP) return engineP;
+    engineP = new Promise(function (ok, no) {
+      if (window.PrintCADDriveMerge) return ok();
+      var sc = document.createElement("script"); sc.src = "/gdrive-sync/printcad-drive-merge.js"; sc.async = true;
+      sc.onload = function () { ok(); }; sc.onerror = function () { engineP = null; no(new Error("Drive merge module missing")); };
+      document.head.appendChild(sc);
+    }).then(function () {
+      return window.PrintCADDriveMerge.createEngine(S, {
+        listDesigns: function () { var a = app(); return a ? a.listDesigns() : []; },
+        designBytes: function (id) { var a = app(); return a ? a.designBytes(id) : Promise.resolve(null); },
+        inspectDesign: function (b) { var a = app(); return a && a.inspectDesign ? a.inspectDesign(b) : Promise.resolve(null); },
+        upsertDesign: function (o) { var a = app(); if (!a || !a.upsertDesign) return Promise.reject(new Error("Open the start page first"));
+          restoring = true; return Promise.resolve(a.upsertDesign(o)).finally(function () { setTimeout(function () { restoring = false; }, 3000); }); },
+        deleteDesigns: function (ids) { var a = app(); return a && a.deleteDesigns ? a.deleteDesigns(ids) : Promise.resolve(); }
+      }, { log: function (m) { try { console.info("PrintCaddy Drive:", m); } catch (e) {} } });
+    });
+    return engineP;
   }
-
-  function queue(id, name, bytes) {
-    var f = fileName(id, name), old = names()[id];
-    S.save(f, bytes);
-    setName(id, f);
-    // The card picture goes along as "<same name>.png", so the Drive list can show previews.
-    var a = app();
-    if (a && a.designThumbnail) a.designThumbnail(id).then(function (url) {
-      var png = dataUrlBytes(url); if (png) S.save(f.replace(/\.lyl$/, ".png"), png);
-    }).catch(function () {});
-    if (old && old !== f) S.saveNow().then(function () { dropOld(old); }, function () {});
+  function thumbBytes(id) {
+    var a = app(); if (!a || !a.designThumbnail) return Promise.resolve(null);
+    return a.designThumbnail(id).then(dataUrlBytes).catch(function () { return null; });
   }
+  /* Edits arrive many times a second; upload each design at most every 2s, always its latest state. */
+  var waiting = {}, timers = {};
+  function queue(id, name, bytes, lastModified) {
+    waiting[id] = { id: id, name: name, bytes: bytes, lastModified: lastModified || Date.now() };
+    clearTimeout(timers[id]); setStatus("pending");
+    timers[id] = setTimeout(function () { flushOne(id).catch(function () {}); }, 2000);
+  }
+  function flushOne(id) {
+    var d = waiting[id]; if (!d) return Promise.resolve(); delete waiting[id]; clearTimeout(timers[id]);
+    var info = (app() && app().listDesigns().filter(function (x) { return x.id === id; })[0]) || {};
+    d.createdAt = info.createdAt;
+    setStatus("saving");
+    return Promise.all([engine(), thumbBytes(id)]).then(function (r) { d.thumb = r[1]; return r[0].saveDesign(d); })
+      .then(function (res) { setStatus("saved"); return res; }, function (e) {
+        if (!waiting[id]) waiting[id] = d; // keep it for the next try
+        setStatus(navigator.onLine === false ? "offline" : "error"); throw e;
+      });
+  }
+  function flushAll() { return Promise.all(Object.keys(waiting).map(function (id) { return flushOne(id).catch(function () {}); })); }
+  window.addEventListener("online", function () { if (S.isSignedIn()) flushAll(); });
 
   window.addEventListener("printcad:design-saved", function (e) {
     var d = e.detail || {};
     if (restoring || !d.projectId || !d.bytes) return;
     if (!S.isSignedIn()) return; // nothing queued while signed out; "Back up all" catches up
-    queue(d.projectId, d.name, d.bytes);
+    queue(d.projectId, d.name, d.bytes, d.updatedAt);
   });
 
   function dataUrlBytes(url) {
@@ -54,28 +74,31 @@
   function backupAll() {
     var a = app(); if (!a) return Promise.reject(new Error("Open the start page first"));
     var list = a.listDesigns();
-    return list.reduce(function (p, d) {
-      return p.then(function () { return a.designBytes(d.id).then(function (b) { if (b) queue(d.id, d.name, b); }); });
-    }, Promise.resolve()).then(function () { return S.saveNow(); }).then(function () { return list.length; });
+    return engine().then(function (E) {
+      return list.reduce(function (p, d) {
+        return p.then(function () { return Promise.all([a.designBytes(d.id), thumbBytes(d.id)]).then(function (r) {
+          if (r[0]) return E.saveDesign({ id: d.id, name: d.name, createdAt: d.createdAt, lastModified: d.updatedAt || Date.now(), bytes: r[0], thumb: r[1] });
+        }); });
+      }, Promise.resolve());
+    }).then(function () { return list.length; });
   }
 
-  function restore(files, pngs) {
-    var a = app(); if (!a) return Promise.reject(new Error("Open the start page first"));
-    pngs = pngs || {};
-    return Promise.all(files.map(function (f) {
-      var base = parseName(f.name).name + " (" + (parseName(f.name).id || f.id).slice(-6) + ")";
-      var png = pngs[f.name.replace(/\.lyl$/, ".png")];
-      return Promise.all([S.load(f.id, "arraybuffer"), png ? S.load(png.id, "arraybuffer").catch(function () { return null; }) : null])
-        .then(function (r) {
-          var out = [{ name: base + ".lyl", bytes: new Uint8Array(r[0]) }];
-          if (r[1]) out.push({ name: base + ".png", bytes: new Uint8Array(r[1]) });
-          return out;
-        });
-    })).then(function (lists) { return [].concat.apply([], lists); }).then(function (entries) {
-      restoring = true;
-      return Promise.resolve(a.restoreDesigns(entries)).finally(function () { setTimeout(function () { restoring = false; }, 3000); });
-    });
+  /* Restore picked Drive designs: merged by design id, newest edit wins, never a second local copy. */
+  function restore(files, all) {
+    if (!app()) return Promise.reject(new Error("Open the start page first"));
+    return engine().then(function (E) { return E.restoreFiles(files, all || files); });
   }
+  var CLEAN = "printcad.drive.cleanup.v1";
+  function cleanup() { return engine().then(function (E) { return E.cleanupAll(); }).then(function (r) { try { localStorage.setItem(CLEAN, String(Date.now())); } catch (e) {} return r; }); }
+  /* After sign-in: one-time duplicate cleanup, then bring newer Drive edits into designs already on this device. */
+  var synced = false;
+  function autoSync() {
+    if (synced || !S.isSignedIn() || !app()) return; synced = true;
+    var first = !localStorage.getItem(CLEAN);
+    (first ? cleanup() : Promise.resolve()).then(function () { return engine(); }).then(function (E) { return E.sync({ onlyExisting: true }); })
+      .then(function () { return flushAll(); }).catch(function (e) { synced = false; console.warn("PrintCaddy Drive sync:", e); });
+  }
+  function setStatus(st) { render(st); }
 
   /* ---------- UI ---------- */
   var el = {}, statusText = {
@@ -95,8 +118,8 @@
       if (!P.busy) P.txt.textContent = statusText[st] || st;
       P.inB.style.display = on ? "none" : "";
       P.inB.textContent = rc ? "Reconnect Drive" : "Sign in with Google";
-      P.outB.style.display = P.allB.style.display = P.resB.style.display = on ? "" : "none";
-      P.allB.disabled = P.resB.disabled = !app();
+      P.outB.style.display = P.allB.style.display = P.resB.style.display = P.cleanB.style.display = on ? "" : "none";
+      P.allB.disabled = P.resB.disabled = P.cleanB.disabled = !app();
       if (P.corner) P.w.dataset.page = startPage ? "start" : "editor";
     });
   }
@@ -117,7 +140,7 @@
         S.load(png.id, "blob").then(function (b) { img.src = URL.createObjectURL(b); }).catch(function () {});
         lab.appendChild(img);
       }
-      lab.appendChild(document.createTextNode(" " + parseName(f.name).name));
+      lab.appendChild(document.createTextNode(" " + ((f.appProperties && f.appProperties.name) || window.PrintCADDriveMerge.parseName(f.name).name)));
       var meta = document.createElement("span"); meta.style.color = "#777";
       meta.textContent = new Date(f.modifiedTime).toLocaleString() + " · " + Math.max(1, Math.round(f.size / 1024)) + " KB";
       li.appendChild(lab); li.appendChild(meta); ul.appendChild(li);
@@ -129,7 +152,7 @@
       var pick = files.filter(function (f) { return ids.indexOf(f.id) >= 0; });
       if (!pick.length) return;
       go.disabled = true; msg.textContent = "Downloading " + pick.length + "…";
-      restore(pick, pngs).then(function () { d.remove(); }, function (e) { go.disabled = false; msg.textContent = "Failed: " + (e && e.message || e); });
+      restore(pick, all).then(function (r) { msg.textContent = "Added " + r.added + ", updated " + r.updated + ", already up to date " + (r.skipped + r.uploaded) + "."; setTimeout(function () { d.remove(); }, 2500); }, function (e) { go.disabled = false; msg.textContent = "Failed: " + (e && e.message || e); });
     });
     box.appendChild(msg); box.appendChild(go); box.appendChild(document.createTextNode(" "));
     box.appendChild(btn("Close", function () { d.remove(); }));
@@ -147,7 +170,13 @@
       backupAll().then(function (n) { P.txt.textContent = "Backed up " + n + " designs"; }, function (e) { P.txt.textContent = "Backup failed: " + (e && e.message || e); })
         .finally(function () { P.allB.disabled = false; setTimeout(function () { P.busy = false; }, 4000); });
     }, "pcd-all");
-    P.resB = btn("Drive designs…", function () { S.list().then(function (f) { dialog(f); }, function (e) { P.txt.textContent = "List failed: " + (e && e.message || e); }); }, "pcd-restore");
+    P.resB = btn("Drive designs…", function () { engine().then(function (E) { return E.listLive(); }).then(function (L) { dialog(L.files); }, function (e) { P.txt.textContent = "List failed: " + (e && e.message || e); }); }, "pcd-restore");
+    P.cleanB = btn("Clean up duplicates", function () {
+      P.cleanB.disabled = true; P.busy = true; P.txt.textContent = "Looking for duplicates…";
+      cleanup().then(function (r) { P.txt.textContent = "Moved " + r.drive.moved + " older Drive copies to old-duplicates, removed " + r.local.removed.length + " local copies"; },
+        function (e) { P.txt.textContent = "Clean-up failed: " + (e && e.message || e); })
+        .finally(function () { P.cleanB.disabled = false; setTimeout(function () { P.busy = false; }, 6000); });
+    }, "pcd-clean");
     P.outB = btn("Sign out", function () { S.signOut(); }, "pcd-signout");
     if (!corner) {
       var h = document.createElement("div"); h.className = "pcd-settings-head";
@@ -157,7 +186,7 @@
     var row = document.createElement("div"); row.className = "pcd-row";
     [dot, P.txt].forEach(function (n) { row.appendChild(n); }); w.appendChild(row);
     var bar = document.createElement("div"); bar.className = "pcd-row";
-    [P.inB, P.allB, P.resB, P.outB].forEach(function (n) { bar.appendChild(n); }); w.appendChild(bar);
+    [P.inB, P.allB, P.resB, P.cleanB, P.outB].forEach(function (n) { bar.appendChild(n); }); w.appendChild(bar);
     if (!cfg.googleClientId) { P.inB.disabled = true; }
     panels.push(P); return P;
   }
@@ -173,8 +202,8 @@
     }
     new MutationObserver(fill).observe(document.body, { childList: true, subtree: true }); fill();
   }
-  S.onStatus(function (st) { render(st); });
-  window.addEventListener("printcad:app-ready", function () { render(S.isSignedIn() ? "signed-in" : "signed-out"); });
+  S.onStatus(function (st) { render(st); if (st === "signed-in") { autoSync(); flushAll(); } });
+  window.addEventListener("printcad:app-ready", function () { render(S.isSignedIn() ? "signed-in" : "signed-out"); autoSync(); });
   window.addEventListener("printcad:view", function () { render(); });
 
   function start() {
@@ -183,5 +212,5 @@
     S.init({ clientId: cfg.googleClientId, appName: "PrintCAD", debounceMs: 2000 }).catch(function () {});
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-  window.PrintCADDrive = { backupAll: backupAll, restore: restore, fileName: fileName };
+  window.PrintCADDrive = { backupAll: backupAll, restore: restore, cleanup: cleanup, engine: engine };
 })();

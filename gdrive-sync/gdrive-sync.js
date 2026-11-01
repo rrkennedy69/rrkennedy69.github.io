@@ -175,6 +175,43 @@
         Object.keys(S.ids).forEach(function (n) { if (S.ids[n] === id) delete S.ids[n]; }); return true;
       });
     },
+    /* Files with their appProperties and parents (all pages). q is an extra Drive query, ANDed with trashed=false. */
+    listMeta: function (q) {
+      var out = [];
+      function page(tok) {
+        var url = API + '?spaces=appDataFolder&q=' + encodeURIComponent('trashed=false' + (q ? ' and (' + q + ')' : '')) +
+          '&fields=' + encodeURIComponent('nextPageToken,files(id,name,modifiedTime,size,appProperties,parents)') + '&pageSize=1000' + (tok ? '&pageToken=' + encodeURIComponent(tok) : '');
+        return gfetch(url).then(function (r) { return r.json(); }).then(function (j) {
+          (j.files || []).forEach(function (f) { out.push({ id: f.id, name: f.name, modifiedTime: f.modifiedTime, size: f.size != null ? Number(f.size) : 0, appProperties: f.appProperties || {}, parents: f.parents || [] }); });
+          return j.nextPageToken ? page(j.nextPageToken) : out;
+        });
+      }
+      return page(null);
+    },
+    /* Create (id null) or overwrite file id with data + appProperties. parent: folder id for new files (default appDataFolder). */
+    putFile: function (id, name, data, props, parent) {
+      var b = toBody(data), meta = { name: name, mimeType: b.type, appProperties: props || {} };
+      if (!id) meta.parents = [parent || 'appDataFolder'];
+      var bd = 'pcad' + Math.random().toString(36).slice(2);
+      var body = new Blob(['--' + bd + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(meta) + '\r\n--' + bd + '\r\nContent-Type: ' + b.type + '\r\n\r\n', b.body, '\r\n--' + bd + '--'], { type: 'multipart/related; boundary=' + bd });
+      var f = '&fields=' + encodeURIComponent('id,name,modifiedTime,size,appProperties,parents');
+      return gfetch(id ? UP + '/' + encodeURIComponent(id) + '?uploadType=multipart' + f : UP + '?uploadType=multipart' + f,
+        { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + bd }, body: body }).then(function (r) { return r.json(); });
+    },
+    /* Metadata-only change: rename, appProperties, and/or move between folders (nothing is deleted). */
+    updateMeta: function (id, meta, addParent, removeParents) {
+      var qs = '?fields=' + encodeURIComponent('id,name,modifiedTime,appProperties,parents') + (addParent ? '&addParents=' + encodeURIComponent(addParent) : '') + (removeParents && removeParents.length ? '&removeParents=' + encodeURIComponent(removeParents.join(',')) : '');
+      return gfetch(API + '/' + encodeURIComponent(id) + qs, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(meta || {}) }).then(function (r) { return r.json(); });
+    },
+    /* A folder inside appDataFolder, made once. */
+    ensureFolder: function (name) {
+      var key = 'folder:' + name; if (S.ids[key]) return Promise.resolve(S.ids[key]);
+      return API_.listMeta("mimeType='application/vnd.google-apps.folder' and name='" + esc(name) + "'").then(function (fs) {
+        if (fs.length) return (S.ids[key] = fs[0].id);
+        return gfetch(API + '?fields=id', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, mimeType: 'application/vnd.google-apps.folder', parents: ['appDataFolder'] }) })
+          .then(function (r) { return r.json(); }).then(function (j) { return (S.ids[key] = j.id); });
+      });
+    },
     onStatus: function (cb) { S.listeners.push(cb); cb(S.status); return function () { S.listeners = S.listeners.filter(function (x) { return x !== cb; }); }; },
     status: function () { return S.status; },
     lastSaved: function () { return ls('last') || null; }
