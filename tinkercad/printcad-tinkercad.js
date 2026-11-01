@@ -83,8 +83,8 @@
     doc.assets = (doc.assets || []).filter(function (a) { return a.kind !== "derived-mesh" || used[a.id]; });
     return doc;
   }
-  /* ---- every Tinkercad import comes in tan (easier to see detail); holes stay holes ---- */
-  var TAN = "#f2caa0", TAN_KD = "Kd 0.949 0.792 0.627", TAN_NUM = String(0xf2caa0);
+  /* ---- every Tinkercad import comes in the default slate grey #8a98a6; holes stay holes ---- */
+  var TAN = "#8a98a6", TAN_KD = "Kd 0.541 0.596 0.651", TAN_NUM = String(0x8a98a6);
   function tanDoc(doc) {
     var changed = false;
     (doc.states || []).forEach(function (st) {

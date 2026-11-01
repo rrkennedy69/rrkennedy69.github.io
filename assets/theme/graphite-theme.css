@@ -7060,6 +7060,171 @@ html[data-theme="dark"]:where([data-palette="graphite"]) .interactive-help-more 
   color: #ffc784;
 }
 
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-section[data-group] {
+  --group-color: #555555;
+}
+
+html[data-theme="dark"]:where([data-palette="graphite"]) .toolbar-section[data-group] {
+  --group-color: #e1e1e1;
+}
+
+html[data-theme="dark"]:where([data-palette="graphite"]) .toolbar-section-label {
+  color: #e1e1e1;
+}
+
+@media (min-width: 960px) and (min-height: 600px) {
+  :where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content.geometry {
+    --toolbar-icon-size: 32px;
+  }
+
+  :where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content.geometry .toolbar-short-label {
+    color: inherit;
+  }
+}
+
+@media (min-width: 960px) and (min-height: 600px) and (max-width: 1120px) {
+  :where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content.geometry {
+    --toolbar-icon-size: 28px;
+  }
+}
+
+@media (min-width: 960px) and (min-height: 600px) {
+  :where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content.geometry .toolbar-section {
+    border: 0;
+  }
+
+  :where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content.geometry .toolbar-section-tools,
+  :where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content.geometry .toolbar-section .action-buttons {
+    background: color-mix(in srgb, var(--group-color) 7%, var(--toolbar-tile));
+    border: 2px solid var(--group-color);
+    box-shadow: none;
+  }
+}
+
+:root:where([data-theme="dark"][data-palette="graphite"]) {
+  --pc-active-ring: #555555;
+  --pc-active-bg: #ebebeb;
+  --pc-active-fg: #2e2e2e;
+}
+
+html[data-theme="dark"]:where([data-palette="graphite"]) {
+  --pc-active-ring: #e1e1e1;
+  --pc-active-bg: #3d3d3d;
+  --pc-active-fg: #f1f1f1;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls button.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls button[aria-pressed="true"],
+html[data-theme="dark"]:where([data-palette="graphite"]) .camera-controls button.active,
+html[data-theme="dark"]:where([data-palette="graphite"]) .camera-controls button[aria-pressed="true"],
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls .tape-tool-popover .tape-delete-button.active {
+  color: var(--pc-active-fg);
+  background: var(--pc-active-bg);
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--pc-active-ring);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-icon.active,
+html[data-theme="dark"]:where([data-palette="graphite"]) .toolbar-icon.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .shape-menu-trigger.active,
+html[data-theme="dark"]:where([data-palette="graphite"]) .shape-menu-trigger.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .font-picker-option.selected,
+:where(html[data-theme="dark"][data-palette="graphite"]) .workspace-settings-nav button.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls .section-tool-popover .section-toggle-btn.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls .section-tool-popover .section-axis-btn.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls .section-tool-popover .section-flip-btn.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-controls .section-tool-popover .section-measure-btn.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .vase-drawing-tabs button[aria-pressed="true"],
+:where(html[data-theme="dark"][data-palette="graphite"]) .snap-units button[aria-pressed="true"],
+:where(html[data-theme="dark"][data-palette="graphite"]) .color-keep-button[aria-pressed="true"],
+html[data-theme="dark"]:where([data-palette="graphite"]) .color-keep-button[aria-pressed="true"] {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--pc-active-ring);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-workspace-tabs button.active,
+html[data-theme="dark"]:where([data-palette="graphite"]) .toolbar-workspace-tabs button.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .design-tab.active,
+html[data-theme="dark"]:where([data-palette="graphite"]) .design-tab.active {
+  border-bottom-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--pc-active-ring);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .shape-state-card button.active .large-solid-swatch,
+:where(html[data-theme="dark"][data-palette="graphite"]) .shape-state-card button.active .large-hole-swatch {
+  border-color: var(--pc-active-ring);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .action-buttons button,
+html[data-theme="dark"]:where([data-palette="graphite"]) .action-buttons button {
+  color: var(--group-color, var(--toolbar-icon));
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .action-buttons button:not(:disabled):hover {
+  background: var(--toolbar-hover-bg);
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--toolbar-hover-ring);
+  color: var(--toolbar-icon);
+}
+
+html[data-theme="dark"]:where([data-palette="graphite"]) .action-buttons button:not(:disabled):hover {
+  color: #f1f1f1;
+  background: #3a3a3a;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .action-buttons .action-icon-button.active,
+:where(html[data-theme="dark"][data-palette="graphite"]) .action-buttons button[aria-pressed="true"] {
+  background: var(--pc-active-bg);
+  box-shadow: inset 0 0 0 2px var(--pc-active-ring);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .toolbar-mode-content {
+  --pc-ribbon-icon: 24px;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-settings button {
+  border: 1px solid var(--line, rgba(127,127,127,.4));
+  background: transparent;
+  color: inherit;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-settings button[aria-pressed="true"] {
+  border-color: var(--pc-active-ring, currentColor);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-row:nth-child(odd) {
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-row.conflict {
+  outline: 1px solid #e0a100;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-combo kbd {
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-conflict-icon,
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-warning svg {
+  color: #e0a100;
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .keys-warning {
+  color: #e0a100;
+}
+
+html:where([data-theme="dark"][data-palette="graphite"])[data-palette="night"] {
+  background: #000000;
+}
+
+html:where([data-theme="dark"][data-palette="graphite"])[data-palette="night"] body {
+  filter: url(#pc-night-vision);
+  background: #000000;
+}
+
 :where(html[data-theme="dark"][data-palette="graphite"]) .dashboard-welcome-hide {
   color: #717171;
   background: transparent;
