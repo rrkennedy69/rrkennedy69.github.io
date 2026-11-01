@@ -7263,6 +7263,15 @@ html[data-theme="dark"]:where([data-palette="graphite"]) .secondary-toolbar .too
   background: transparent !important;
 }
 
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-rail-dropzone {
+  border: 2px dashed color-mix(in srgb, var(--accent, #c56a1b) 70%, transparent);
+  background: color-mix(in srgb, var(--accent, #c56a1b) 8%, transparent);
+}
+
+:where(html[data-theme="dark"][data-palette="graphite"]) .camera-rail-dropzone.hot {
+  background: color-mix(in srgb, var(--accent, #c56a1b) 26%, transparent);
+}
+
 :where(html[data-theme="dark"][data-palette="graphite"]) .dashboard-welcome-hide {
   color: #717171;
   background: transparent;
