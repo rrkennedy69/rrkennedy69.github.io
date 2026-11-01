@@ -1,7 +1,7 @@
 /* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202611010743-48e7c783", busy = false, pending = false;
+  var BUILD = "202611010755-c23971ca", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
@@ -34,7 +34,7 @@
 
 /* Build label: small muted text fixed bottom-left on the Home screen only (never in the editor). */
 (function () {
-  var BUILD = "202611010743-48e7c783", VERSION = "1.0.13", desk = "", el = null;
+  var BUILD = "202611010755-c23971ca", VERSION = "1.0.13", desk = "", el = null;
   function label() { var b = BUILD.indexOf("__") === 0 ? "dev" : BUILD, v = desk || (VERSION.indexOf("__") === 0 ? "dev" : VERSION); return "Version " + v + "\nBuild " + b; }
   function sync() {
     var home = !document.querySelector(".secondary-toolbar") && !!document.body;
