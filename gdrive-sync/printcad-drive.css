@@ -11,3 +11,8 @@
 .pcd-settings .pcs-dot{width:8px;height:8px;border-radius:50%;background:#999}.pcd-settings.pcs-signed-in .pcs-dot,.pcd-settings.pcs-saved .pcs-dot{background:#1e8e3e}
 .pcd-settings button{padding:5px 10px;border-radius:6px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;cursor:pointer}
 .pcd-settings .pcd-signin{background:#1a73e8;color:#fff;border-color:#1a73e8}
+
+.pcd-home-sync{position:fixed;right:12px;bottom:34px;width:10px;height:10px;border-radius:50%;border:2px solid #4285f4;border-top-color:transparent;animation:pcd-spin .9s linear infinite;z-index:50;pointer-events:none;opacity:.8}
+.pcd-home-sync[hidden]{display:none}
+html[data-palette="night"] .pcd-home-sync{border-color:#ff2a2a;border-top-color:transparent}
+@keyframes pcd-spin{to{transform:rotate(360deg)}}

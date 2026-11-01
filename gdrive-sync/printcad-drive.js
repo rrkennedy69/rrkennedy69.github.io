@@ -99,6 +99,30 @@
       .then(function () { return flushAll(); }).catch(function (e) { synced = false; console.warn("PrintCaddy Drive sync:", e); });
   }
   function setStatus(st) { render(st); }
+  /* Back on the start page (Home, closing a design, or the tab shown again): send waiting saves, then a full
+   * sync of every design (newest edit wins, one copy per design id). At most once every 10 s; quiet when
+   * offline or signed out; a small corner dot instead of a toast. */
+  var lastHome = 0, homeBusy = false;
+  function onStart() { return document.body.dataset.printcadView === "start"; }
+  function homeSync(why) {
+    var now = Date.now();
+    if (homeBusy || now - lastHome < 10000) return Promise.resolve(false);
+    if (!S.isSignedIn() || !app() || (typeof navigator !== "undefined" && navigator.onLine === false)) return Promise.resolve(false);
+    lastHome = now; homeBusy = true;
+    var dot = document.querySelector(".pcd-home-sync");
+    if (!dot) { dot = document.createElement("div"); dot.className = "pcd-home-sync"; dot.setAttribute("role", "status"); dot.setAttribute("aria-label", "Syncing with Google Drive"); dot.setAttribute("data-testid", "home-sync-indicator"); document.body.appendChild(dot); }
+    dot.hidden = false;
+    return new Promise(function (ok) { setTimeout(ok, 400); }) // let the design being left finish saving
+      .then(flushAll).then(function () { return engine(); }).then(function (E) { return E.sync({}); })
+      .then(function (r) { window.dispatchEvent(new CustomEvent("printcad:home-synced", { detail: { why: why, result: r } })); return true; },
+        function (e) { try { console.info("PrintCaddy Drive home sync skipped:", e && e.message || e); } catch (x) {} return false; })
+      .finally(function () { homeBusy = false; dot.hidden = true; });
+  }
+  var wasStart = false;
+  window.addEventListener("printcad:app-ready", function () { var st = onStart(); if (st && !wasStart && document.body.dataset.printcadSeen) homeSync("home"); wasStart = st; document.body.dataset.printcadSeen = "1"; });
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && onStart()) homeSync("visible"); });
+  window.addEventListener("pageshow", function (e) { if (e.persisted && onStart()) homeSync("pageshow"); });
+
 
   /* ---------- UI ---------- */
   var el = {}, statusText = {
@@ -212,5 +236,5 @@
     S.init({ clientId: cfg.googleClientId, appName: "PrintCAD", debounceMs: 2000 }).catch(function () {});
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-  window.PrintCADDrive = { backupAll: backupAll, restore: restore, cleanup: cleanup, engine: engine };
+  window.PrintCADDrive = { backupAll: backupAll, restore: restore, cleanup: cleanup, engine: engine, homeSync: homeSync };
 })();
