@@ -1,7 +1,7 @@
 /* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202611030144-318f380d", busy = false, pending = false;
+  var BUILD = "202611030155-1cbf1624", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
@@ -36,7 +36,7 @@
    whose bottom-left holds the layer slider / view cube). The button opens a small modal; in the iPad app it uses the
    app's in-app updater (window.PrintCaddyApp, from ios-shim.js), on the website it compares the live /version.json. */
 (function () {
-  var BUILD = "202611030144-318f380d", VERSION = "1.0.13", desk = "", el = null, txt = null;
+  var BUILD = "202611030155-1cbf1624", VERSION = "1.0.13", desk = "", el = null, txt = null;
   function b() { return BUILD.indexOf("__") === 0 ? "dev" : BUILD; }
   function v() { return desk || (VERSION.indexOf("__") === 0 ? "dev" : VERSION); }
   function label() { return "Version " + v() + "\nBuild " + b(); }
@@ -59,8 +59,32 @@
     function esc(e) { if (e.key === "Escape") done(); }
     close.onclick = done; ov.addEventListener("click", function (e) { if (e.target === ov) done(); }); document.addEventListener("keydown", esc);
     function action(text, fn) { var a = h("button", BTN + "border:0;background:#e8892c;color:#fff", text); a.type = "button"; a.className = "pc-update-action"; a.onclick = fn; row.insertBefore(a, close); return a; }
-    if (app && app.nativeUpdateUrl) { var n = h("a", "margin-right:auto;color:#a85d12;font-size:13px;padding:10px 0", "Native app update (.ipa)"); n.href = app.nativeUpdateUrl; n.target = "_blank"; n.rel = "noreferrer"; row.appendChild(n); }
-    row.appendChild(close); card.appendChild(title); card.appendChild(info); card.appendChild(status); card.appendChild(row); ov.appendChild(card); document.body.appendChild(ov); close.focus();
+    row.appendChild(close); card.appendChild(title); card.appendChild(info); card.appendChild(status);
+    var nat = h("div", "font-size:13px;color:#6e6050"); card.appendChild(nat); card.appendChild(row);
+    function link(text, href, css) { var a = h("a", css || "color:#a85d12;font-size:13px", text); a.href = href; a.target = "_blank"; a.rel = "noreferrer"; return a; }
+    if (app && app.checkNative) {
+      app.checkNative().then(function (r) {
+        if (r && r.available) {
+          var box = h("div", "margin-top:12px;padding:10px 12px;border-radius:10px;background:#fbefe1;color:#2b2218");
+          box.appendChild(h("div", "font-weight:600", "New app version available: " + r.version + " (you have " + r.current + ")"));
+          box.appendChild(h("div", "font-size:13px;margin:4px 0 8px;color:#6e6050", "Download the .ipa, then install it with Sideloadly from your computer. Your designs stay on the iPad."));
+          box.appendChild(link("Download .ipa", r.ipaUrl, BTN + "display:inline-flex;align-items:center;text-decoration:none;border:0;background:#e8892c;color:#fff"));
+          nat.appendChild(box);
+        }
+        var sec = h("div", "margin-top:8px;display:flex;gap:14px;flex-wrap:wrap");
+        sec.appendChild(link("Release notes", (r && r.releaseUrl) || app.nativeUpdateUrl));
+        if (app.altStoreSourceUrl) sec.appendChild(link("AltStore source", app.altStoreSourceUrl, "color:#8a7a68;font-size:12px"));
+        nat.appendChild(sec);
+      }).catch(function () {});
+    }
+    if (app && app.provisioning) {
+      app.provisioning().then(function (p) {
+        if (!p || !p.expires) return; var d = new Date(p.expires), left = d - Date.now();
+        var line = h("div", "margin-top:8px;font-size:12px;color:" + (left < 36 * 3600e3 ? "#b4441c;font-weight:600" : "#8a7a68"),
+          left > 0 ? "App signing expires " + d.toLocaleString() + (left < 36 * 3600e3 ? " – re-sign with Sideloadly before then." : " (free Apple ID: re-sign with Sideloadly every 7 days).") : "App signing has expired – re-install with Sideloadly.");
+        nat.insertBefore(line, nat.firstChild);
+      }).catch(function () {});
+    } ov.appendChild(card); document.body.appendChild(ov); close.focus();
     function fail(e) { status.textContent = "Couldn't check: " + (e && e.message ? e.message : e || "offline?"); }
     if (app && app.check) {
       app.check().then(function (r) {
