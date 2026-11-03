@@ -1,7 +1,7 @@
 /* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202611030143-b3ff99a4", busy = false, pending = false;
+  var BUILD = "202611030144-318f380d", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
@@ -36,7 +36,7 @@
    whose bottom-left holds the layer slider / view cube). The button opens a small modal; in the iPad app it uses the
    app's in-app updater (window.PrintCaddyApp, from ios-shim.js), on the website it compares the live /version.json. */
 (function () {
-  var BUILD = "202611030143-b3ff99a4", VERSION = "1.0.13", desk = "", el = null, txt = null;
+  var BUILD = "202611030144-318f380d", VERSION = "1.0.13", desk = "", el = null, txt = null;
   function b() { return BUILD.indexOf("__") === 0 ? "dev" : BUILD; }
   function v() { return desk || (VERSION.indexOf("__") === 0 ? "dev" : VERSION); }
   function label() { return "Version " + v() + "\nBuild " + b(); }
