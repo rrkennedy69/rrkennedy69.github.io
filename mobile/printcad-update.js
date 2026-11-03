@@ -1,7 +1,7 @@
 /* PrintCaddy updates: notice a newer published build and switch to it without clearing site data.
    Start page: reloads straight away. Editor: reloads when the tab comes back, or right away via the "Reload" button. */
 (function () {
-  var BUILD = "202611030155-1cbf1624", busy = false, pending = false;
+  var BUILD = "202611030201-6daaad65", busy = false, pending = false;
   function inEditor() { return !!document.querySelector(".secondary-toolbar"); }
   function reload() { try { sessionStorage.setItem("printcad-updated", BUILD); } catch (e) {} location.reload(); }
   function note() {
@@ -36,7 +36,7 @@
    whose bottom-left holds the layer slider / view cube). The button opens a small modal; in the iPad app it uses the
    app's in-app updater (window.PrintCaddyApp, from ios-shim.js), on the website it compares the live /version.json. */
 (function () {
-  var BUILD = "202611030155-1cbf1624", VERSION = "1.0.13", desk = "", el = null, txt = null;
+  var BUILD = "202611030201-6daaad65", VERSION = "1.0.13", desk = "", el = null, txt = null;
   function b() { return BUILD.indexOf("__") === 0 ? "dev" : BUILD; }
   function v() { return desk || (VERSION.indexOf("__") === 0 ? "dev" : VERSION); }
   function label() { return "Version " + v() + "\nBuild " + b(); }
@@ -106,6 +106,7 @@
   function sync() {
     var home = !document.querySelector(".secondary-toolbar") && !!document.body;
     if (!home) { if (el) { el.remove(); el = null; document.documentElement.classList.remove("pc-has-build"); } return; }
+    if (el && !el.isConnected) { el = null; }
     if (!el) {
       el = h("div", "position:fixed;z-index:5;left:calc(8px + env(safe-area-inset-left,0px));bottom:calc(6px + env(safe-area-inset-bottom,0px));display:flex;align-items:flex-end;gap:8px;max-width:calc(100vw - 16px)");
       el.className = "pc-build-bar";
@@ -119,7 +120,7 @@
     var t = label(); if (txt.textContent !== t) txt.textContent = t;
   }
   function start() {
-    sync(); new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
+    sync(); new MutationObserver(sync).observe(document.documentElement, { childList: true, subtree: true });
     var d = window.printcaddyDesktop;
     if (d && d.info) d.info().then(function (i) { if (i && i.version) { desk = i.version; sync(); } }).catch(function () {});
   }
